@@ -6,10 +6,11 @@ const prisma = new PrismaClient()
 
 export async function GET(
   request: NextRequest,
-   context: { params: { id: string } }
+    { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const quizId = context.params.id
+    const { id } = await params;   
+    const quizId = id; 
 
     // Optionally validate quizId format if needed (e.g., UUID or integer)
     // If using numeric IDs:
