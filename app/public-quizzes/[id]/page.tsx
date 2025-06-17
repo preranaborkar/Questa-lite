@@ -1,4 +1,4 @@
-// app/take-quiz/[id]/page.tsx
+// app/public-quiz/[id]/page.tsx
 'use client'
 
 import { useState, useEffect } from 'react'
@@ -34,7 +34,12 @@ interface Answer {
   value: string
 }
 
-export default function TakeQuizPage({ params }: { params: { id: string } }) {
+// Updated interface for Next.js 15+ async params
+interface PageProps {
+  params: Promise<{ id: string }>
+}
+
+export default function TakeQuizPage({ params }: PageProps) {
   const router = useRouter()
   const [quiz, setQuiz] = useState<QuizDetails | null>(null)
   const [loading, setLoading] = useState(true)
@@ -43,14 +48,28 @@ export default function TakeQuizPage({ params }: { params: { id: string } }) {
   const [answers, setAnswers] = useState<Answer[]>([])
   const [submitterName, setSubmitterName] = useState('')
   const [submitterEmail, setSubmitterEmail] = useState('')
+  const [quizId, setQuizId] = useState<string | null>(null)
+
+  // Resolve params promise
+  useEffect(() => {
+    const resolveParams = async () => {
+      const resolvedParams = await params
+      setQuizId(resolvedParams.id)
+    }
+    resolveParams()
+  }, [params])
 
   useEffect(() => {
-    fetchQuiz()
-  }, [params.id])
+    if (quizId) {
+      fetchQuiz()
+    }
+  }, [quizId])
 
   const fetchQuiz = async () => {
+    if (!quizId) return
+    
     try {
-      const response = await fetch(`/api/quizzesPublic/${params.id}`)
+      const response = await fetch(`/api/quizzesPublic/${quizId}`)
       if (!response.ok) {
         if (response.status === 404) {
           throw new Error('Quiz not found')
@@ -81,7 +100,7 @@ export default function TakeQuizPage({ params }: { params: { id: string } }) {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!quiz) return
+    if (!quiz || !quizId) return
 
     // Check required fields
     const requiredQuestions = quiz.questions.filter(q => q.required)
@@ -99,7 +118,7 @@ export default function TakeQuizPage({ params }: { params: { id: string } }) {
     setError(null)
 
     try {
-      const response = await fetch(`/api/quizzesPublic/${params.id}/responses`, {
+      const response = await fetch(`/api/quizzesPublic/${quizId}/responses`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
