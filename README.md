@@ -48,7 +48,7 @@ A simple fullstack quiz application where authenticated users can create quizzes
    ```bash
    npx prisma generate
    npx prisma db push
-   npm run seed
+
    ```
 
 4. **Run development server**
