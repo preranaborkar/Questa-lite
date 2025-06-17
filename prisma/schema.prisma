@@ -1,0 +1,86 @@
+// prisma/schema.prisma
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mongodb"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  email     String   @unique
+  password  String
+  name      String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  quizzes   Quiz[]
+  
+  @@map("users")
+}
+
+model Quiz {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  title       String
+  description String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  creatorId   String   @db.ObjectId
+  creator     User     @relation(fields: [creatorId], references: [id], onDelete: Cascade)
+  
+  questions   Question[]
+  responses   Response[]
+  
+  @@map("quizzes")
+}
+
+model Question {
+  id       String      @id @default(auto()) @map("_id") @db.ObjectId
+  text     String
+  type     QuestionType
+  options  String[]    @default([])
+  required Boolean     @default(true)
+  order    Int
+  
+  quizId   String      @db.ObjectId
+  quiz     Quiz        @relation(fields: [quizId], references: [id], onDelete: Cascade)
+  
+  answers  Answer[]
+  
+  @@map("questions")
+}
+
+model Response {
+  id             String   @id @default(auto()) @map("_id") @db.ObjectId
+  submittedAt    DateTime @default(now())
+  submitterName  String?
+  submitterEmail String?
+  
+  quizId         String   @db.ObjectId
+  quiz           Quiz     @relation(fields: [quizId], references: [id], onDelete: Cascade)
+  
+  answers        Answer[]
+  
+  @@map("responses")
+}
+
+model Answer {
+  id         String   @id @default(auto()) @map("_id") @db.ObjectId
+  value      String
+  
+  questionId String   @db.ObjectId
+  question   Question @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  
+  responseId String   @db.ObjectId
+  response   Response @relation(fields: [responseId], references: [id], onDelete: Cascade)
+  
+  @@map("answers")
+}
+
+enum QuestionType {
+  SINGLE_CHOICE
+  TEXT
+}
