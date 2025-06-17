@@ -4,6 +4,18 @@ import { PrismaClient } from '@prisma/client'
 
 const prisma = new PrismaClient()
 
+// Define types for the request body
+interface AnswerInput {
+  questionId: string
+  value: string | number | boolean
+}
+
+interface RequestBody {
+  answers: AnswerInput[]
+  submitterName?: string
+  submitterEmail?: string
+}
+
 export async function POST(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
@@ -11,7 +23,7 @@ export async function POST(
   try {
     // Await the params since it's a Promise in Next.js 13+
     const { id } = await params
-    const body = await request.json()
+    const body: RequestBody = await request.json()
     const { answers, submitterName, submitterEmail } = body
 
     console.log('=== API DEBUG ===')
@@ -45,7 +57,7 @@ export async function POST(
 
     // Validate required fields
     const requiredQuestions = quiz.questions.filter(q => q.required)
-    const answeredQuestionIds = answers.map((a: any) => a.questionId)
+    const answeredQuestionIds = answers.map((a: AnswerInput) => a.questionId)
     
     console.log('Required questions:', requiredQuestions.map(q => q.id))
     console.log('Answered question IDs:', answeredQuestionIds)
@@ -90,7 +102,7 @@ export async function POST(
     console.log('Response created with ID:', response.id)
 
     // Create all answers with better error handling
-    const answerPromises = answers.map((answer: any, index: number) => {
+    const answerPromises = answers.map((answer: AnswerInput, index: number) => {
       console.log(`Creating answer ${index + 1}:`, answer)
       return prisma.answer.create({
         data: {
