@@ -7,7 +7,7 @@ const prisma = new PrismaClient()
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     // Get the authorization header
@@ -26,8 +26,10 @@ export async function GET(
     } catch (error) {
       return NextResponse.json({ error: 'Invalid token' }, { status: 401 })
     }
+    const { id } = await params; // Add this line
+    const quizId = id; 
 
-    const quizId = params.id
+    
 
     // First verify that the quiz exists and belongs to the authenticated user
     const quiz = await prisma.quiz.findUnique({
